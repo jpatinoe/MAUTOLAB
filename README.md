@@ -116,7 +116,3 @@ There is also room for additional utilities, for example:
 - branch filtering and selection
 - conversion utilities between AUTO output and MATLAB plotting workflows
 - higher-level functions for accessing continuation parameters and labelled solution points
-
-## Version note
-
-The code in this repository was prepared for sharing after testing with **MATLAB R2025a**.
