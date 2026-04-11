@@ -117,30 +117,6 @@ There is also room for additional utilities, for example:
 - conversion utilities between AUTO output and MATLAB plotting workflows
 - higher-level functions for accessing continuation parameters and labelled solution points
 
-## Suggested repository setup on GitHub
-
-A simple repository structure is:
-
-```text
-MAUTOLAB/
-├── README.md
-├── read_b_auto.m
-└── parse_header_lines.m
-```
-
-## How to upload to GitHub
-
-If you create a GitHub repository named `MAUTOLAB`, you can upload these files through the GitHub web interface, or from the command line:
-
-```bash
-git init
-git branch -M main
-git remote add origin https://github.com/<your-username>/MAUTOLAB.git
-git add README.md read_b_auto.m parse_header_lines.m
-git commit -m "Initial commit: add b-file reader for AUTO outputs"
-git push -u origin main
-```
-
 ## Version note
 
 The code in this repository was prepared for sharing after testing with **MATLAB R2025a**.
