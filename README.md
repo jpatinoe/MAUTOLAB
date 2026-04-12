@@ -104,9 +104,7 @@ plotbd_app(branches)
 
 ## App preview
 
-```markdown
 ![plotbd app screenshot](docs/plotbd_app_screenshot.png)
-```
 
 ---
 
