@@ -1,146 +1,73 @@
 # MAUTOLAB
 
-MAUTOLAB is a MATLAB toolkit for reading and working with output files produced by [AUTO-07p](https://sourceforge.net/projects/auto-07p/). The long-term goal is to provide a clean MATLAB interface for AUTO output files such as `b.*`, `d.*`, and `s.*`.
+MAUTOLAB is a MATLAB toolkit for reading and working with output files produced by AUTO-07p.
 
-At the current stage, the toolkit includes:
-- a reader for **AUTO bifurcation diagram files** (`b.*`)
-- utilities for **visualising and exploring bifurcation data**
+The goal is to provide a clean, structured, and MATLAB-native interface for AUTO output files such as:
 
-Tested in **MATLAB R2025a**.
+- `b.*` — bifurcation diagrams  
+- `d.*` — diagnostics (eigenvalues / multipliers)  
+- `s.*` — solutions *(planned)*  
+
+Tested in MATLAB R2025a.
 
 ---
 
-## Current functionality
+## Repository structure
 
-### `read_b_auto`
+```
+MAUTOLAB/
+│
+├── b_files/
+│   ├── read_b_auto.m
+│   ├── parse_header_lines.m
+│   ├── plotbd.m
+│   ├── showbdvars.m
+│   └── plotbd_app.m
+│
+├── d_files/
+│   ├── read_d_auto.m
+│   ├── read_d_blocks.m
+│   ├── read_d_table.m
+│   ├── d_summary.m
+│   ├── d_plot_spectrum.m
+│   ├── plot_complex_slider.m
+│   ├── get_multipliers.m
+│   └── d_plot_app.m
+│
+└── docs/
+```
 
-`read_b_auto` reads an AUTO `b.*` file and returns a MATLAB struct array, with one entry per branch.
+---
+
+# Bifurcation diagram files (`b.*`)
+
+## read_b_auto
+
+Reads an AUTO `b.*` file and returns a struct array, one entry per branch.
 
 Each branch contains:
-
-- `branch_number`: the AUTO branch number
-- `data`: a MATLAB table with the numerical columns for that branch
-- `header`: a struct containing parsed metadata from the branch header
-
----
-
-### `parse_header_lines`
-
-This helper function parses metadata lines that appear in the header block of each branch in a `b.*` file.
-
-Supported metadata currently includes:
-
-- standard numeric AUTO constants such as `NDIM`, `IPS`, `NTST`, `DS`, etc.
-- lowercase string fields such as `e`, `s`, `dat`, `sv`
-- `User-specified parameters:` written either as numeric indices or as symbolic names
-- `Active continuation parameters:` written either as numeric indices or as symbolic names
-- indexed name maps such as
-  - `parnames = {1: 'rho', 2: 'beta', 3: 'sigma'}`
-  - `unames   = {1: 'x', 2: 'y', 3: 'z'}`
+- `branch_number`
+- `data` (MATLAB table)
+- `header` (parsed metadata)
 
 ---
 
-### `plotbd`
+## plotbd
 
-`plotbd` is the main plotting function for AUTO bifurcation diagrams.
-
-It supports both **2D and 3D plotting**, with a flexible interface:
-
-```matlab
-plotbd(branches)                          % default (columns 4 vs 5)
-plotbd(branches, 'x', 4, 'y', 5)          % explicit columns
-plotbd(branches, 'x', 'PAR_1', 'y', 'L2_NORM')
-plotbd(branches, 'x', 4, 'y', 5, 'z', 6)  % 3D plot
-```
-
-#### Features
-
-- automatic defaults based on column positions (4 and 5)
-- support for both **column indices** and **variable names**
-- optional **3D plotting** via `'z'`
-- branch selection (`'branches', [1 2 5]` or `'all'`)
-- stability visualisation (`'off'`, `'dashed'`, `'pale'`)
-- interpolation of curves
-- special point detection and labelling
-- full control over line width, markers, legend, and grid
-
----
-
-### `showbdvars`
-
-`showbdvars` helps inspect the variables available in the loaded data.
-
-```matlab
-showbdvars(branches)
-showbdvars(branches, [1 2])
-```
-
-This prints the variable names available in each selected branch, making it easier to choose what to plot.
-
----
-
-### `plotbd_app`
-
-`plotbd_app` launches an **interactive GUI** for exploring bifurcation diagrams.
-
-```matlab
-plotbd_app(branches)
-```
-
-#### Features
-
-- interactive selection of:
-  - x, y, z variables
-  - branch subsets
-  - stability display mode
-  - interpolation settings
-  - special points and labels
-- automatic switching between **2D and 3D**
-- live updating of the plot
-- export plots to file (PNG, JPG, PDF, FIG)
-- fully built on top of `plotbd` (consistent behaviour)
-
----
-
-## App preview
-
-![plotbd app screenshot](docs/plotbd_app_screenshot.png)
-
----
-
-## Files in this repository
-
-- `read_b_auto.m` — main reader for AUTO `b.*` files
-- `parse_header_lines.m` — helper for parsing header metadata
-- `plotbd.m` — main plotting function (2D/3D)
-- `showbdvars.m` — helper to inspect available variables
-- `plotbd_app.m` — interactive GUI for exploration
-
----
-
-## Basic usage
-
-Place the `.m` files on your MATLAB path, then run:
-
-```matlab
-branches = read_b_auto("b.lor");
-```
-
-Inspect the data:
-
-```matlab
-branches(1).branch_number
-branches(1).header
-branches(1).data(1:5,:)
-```
-
-Plot a bifurcation diagram:
+Main plotting function for bifurcation diagrams.
 
 ```matlab
 plotbd(branches)
+plotbd(branches, 'x', 4, 'y', 5)
+plotbd(branches, 'x', 'PAR_1', 'y', 'L2_NORM')
+plotbd(branches, 'x', 4, 'y', 5, 'z', 6)
 ```
 
-Launch the interactive app:
+---
+
+## plotbd_app
+
+Interactive GUI for exploring bifurcation diagrams.
 
 ```matlab
 plotbd_app(branches)
@@ -148,57 +75,85 @@ plotbd_app(branches)
 
 ---
 
-## Output format
+# Diagnostics files (`d.*`)
 
-For a file with several branches, the output has the form:
+## Workflow
 
-```matlab
-branches(k).branch_number
-branches(k).header
-branches(k).data
 ```
-
-where `branches(k).data` is a MATLAB table.
-
-The first numerical column in the AUTO `b.*` file is the signed branch number. This column is **not** duplicated in the output table; instead it is stored as `branch_number`.
-
----
-
-## Notes on column names
-
-The reader converts AUTO column labels into MATLAB-safe table variable names. For example:
-
-- `PAR(1)` → `PAR_1`
-- `MAX U(1)` → `MAX_U_1`
-- `L2-NORM` → `L2_NORM`
-
-This makes the columns easy to access in MATLAB code.
-
----
-
-## Example
-
-```matlab
-branches = read_b_auto("b.het");
-T = branches(1).data;
-
-plot(T.PAR_1, T.MAX_U_1)
+read_d_auto → read_d_blocks → read_d_table → analysis/plotting
 ```
 
 ---
 
-## Current limitations
+## d_summary
 
-This repository is currently focused on `b.*` files only.
+Prints a formatted summary of spectral data.
 
-Planned future extensions include:
+```matlab
+d_summary(diag)
+```
 
-- `s.*` solution files
-- `d.*` diagnostics files
+---
 
-There is also room for additional utilities, for example:
+## d_plot_spectrum
 
-- branch filtering and selection
-- higher-level plotting presets
-- tools for analysing special points and bifurcations
-- integration with continuation workflows
+Plots spectral quantities along continuation.
+
+```matlab
+d_plot_spectrum(diag)
+```
+
+---
+
+## plot_complex_slider
+
+Interactive complex-plane visualisation.
+
+```matlab
+plot_complex_slider(diag)
+```
+
+Features:
+- slider over continuation points
+- unit circle always displayed
+- arrows for out-of-range values
+- warning if no multiplier near (1,0)
+
+---
+
+## d_plot_app
+
+Interactive app combining all diagnostic visualisations.
+
+```matlab
+d_plot_app(diag)
+```
+
+---
+
+# Basic usage
+
+```matlab
+branches = read_b_auto("b.lor");
+plotbd(branches);
+
+diag = read_d_auto("d.lor");
+d_summary(diag)
+d_plot_app(diag)
+```
+
+---
+
+# Notes
+
+- Eigenvalues: stability determined by sign of Re(λ)
+- Multipliers: stability determined by |μ|
+- One multiplier must satisfy μ = 1 (consistency check)
+
+---
+
+# Future work
+
+- support for `s.*` files
+- automatic bifurcation detection
+- integration between `b.*` and `d.*`
