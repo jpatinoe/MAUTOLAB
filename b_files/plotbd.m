@@ -5,10 +5,11 @@ function h = plotbd(branches, varargin)
 %       h = plotbd(branches)
 %       h = plotbd(branches, 'x', 'PAR(1)', 'y', 'L2-NORM')
 %       h = plotbd(branches, 'x', 4, 'y', 5)
+%       h = plotbd(branches, 'x', 'PAR(1)', 'y', {'x','MAX_x'})
 %
 %   3D:
 %       h = plotbd(branches, 'x', 4, 'y', 5, 'z', 6)
-%       h = plotbd(branches, 'x', 'PAR(1)', 'y', 'MAX U(1)', 'z', 'PERIOD')
+%       h = plotbd(branches, 'x', 'PAR(1)', 'y', {'x','MAX_x'}, 'z', {'PERIOD','MAX_z'})
 %
 % INPUT
 %   branches : structure array returned by a b-file reader. Each element is
@@ -18,8 +19,8 @@ function h = plotbd(branches, varargin)
 %
 % NAME-VALUE OPTIONS
 %   'x'                  : variable name or column index for x-axis
-%   'y'                  : variable name or column index for y-axis
-%   'z'                  : variable name or column index for z-axis
+%   'y'                  : variable name/index or list of candidates
+%   'z'                  : variable name/index or list of candidates
 %                          If omitted or empty, plot is 2D.
 %   'branches'           : 'all' (default) or numeric array of branch numbers
 %   'Axes'               : target axes handle
@@ -35,28 +36,10 @@ function h = plotbd(branches, varargin)
 %   'Legend'             : true/false
 %   'Grid'               : true/false
 %
-% DEFAULTS
-%   If 'x' is not specified, the default is column 4.
-%   If 'y' is not specified, the default is column 5.
-%   If those columns do not exist, the function throws a clear error and
-%   asks the user to specify what to plot explicitly.
-%   There is no default z-variable; 3D is used only if 'z' is specified.
-%
-% OUTPUT
-%   h : structure with plot handles and resolved options
-%
 % NOTES
-%   - Stability is inferred from the sign of PT, following the previous
-%     convention: PT < 0 is treated as stable.
-%   - Variable names may differ across b-files, so defaults are based on
-%     column position rather than variable name.
-%
-% EXAMPLES
-%   plotbd(branches)
-%   plotbd(branches, 'x', 4, 'y', 5)
-%   plotbd(branches, 'x', 4, 'y', 5, 'z', 6)
-%   plotbd(branches, 'x', 'PAR(1)', 'y', 'L2-NORM')
-%   plotbd(branches, 'branches', [1 2], 'Stability', 'dashed')
+%   - If multiple y- or z-candidates are supplied, the first variable
+%     present in each branch is used.
+%   - Stability is inferred from the sign of PT: PT < 0 is treated as stable.
 
     narginchk(1, inf);
 
@@ -109,11 +92,11 @@ function h = plotbd(branches, varargin)
 
         vars = tbl.Properties.VariableNames;
 
-        [xname, okx] = resolve_variable_spec(tbl, opts.x);
-        [yname, oky] = resolve_variable_spec(tbl, opts.y);
+        [xname, okx] = resolve_variable_candidates(tbl, opts.x);
+        [yname, oky] = resolve_variable_candidates(tbl, opts.y);
 
         if is3D
-            [zname, okz] = resolve_variable_spec(tbl, opts.z);
+            [zname, okz] = resolve_variable_candidates(tbl, opts.z);
         else
             zname = '';
             okz = true;
@@ -121,7 +104,7 @@ function h = plotbd(branches, varargin)
 
         if ~(okx && oky && okz)
             warning('plotbd:MissingVariables', ...
-                ['Branch %d does not contain the requested x/y/z specification.\n' ...
+                ['Branch %d does not contain a compatible x/y/z specification.\n' ...
                  'Available variables:\n  %s\n' ...
                  'Skipping this branch.'], ...
                 branches(i).branch_number, strjoin(vars, ', '));
@@ -153,7 +136,6 @@ function h = plotbd(branches, varargin)
             end
         else
             pt = [];
-            order = 1:numel(x);
             if ~strcmpi(opts.Stability, 'off')
                 warning('plotbd:MissingPT', ...
                     'Branch %d has no PT column. Stability display disabled for this branch.', ...
@@ -250,17 +232,11 @@ function opts = parse_plotbd_options(varargin)
     parser = inputParser;
     parser.FunctionName = 'plotbd';
 
-    addParameter(parser, 'x', [], @(v) ...
-        isempty(v) || ischar(v) || isstring(v) || ...
-        (isnumeric(v) && isscalar(v) && v >= 1));
+    validSpec = @(v) validate_variable_spec(v);
 
-    addParameter(parser, 'y', [], @(v) ...
-        isempty(v) || ischar(v) || isstring(v) || ...
-        (isnumeric(v) && isscalar(v) && v >= 1));
-
-    addParameter(parser, 'z', [], @(v) ...
-        isempty(v) || ischar(v) || isstring(v) || ...
-        (isnumeric(v) && isscalar(v) && v >= 1));
+    addParameter(parser, 'x', [], validSpec);
+    addParameter(parser, 'y', [], validSpec);
+    addParameter(parser, 'z', [], validSpec);
 
     addParameter(parser, 'branches', 'all', @(x) ...
         (ischar(x) || isstring(x)) || (isnumeric(x) && isvector(x)));
@@ -280,21 +256,27 @@ function opts = parse_plotbd_options(varargin)
     addParameter(parser, 'LineWidth', 2.0, @(x) isnumeric(x) && isscalar(x) && x > 0);
     addParameter(parser, 'MarkerSize', 5, @(x) isnumeric(x) && isscalar(x) && x > 0);
 
-    addParameter(parser, 'Title', [], @(x) ...
-        isempty(x) || ischar(x) || isstring(x));
-
+    addParameter(parser, 'Title', [], @(x) isempty(x) || ischar(x) || isstring(x));
     addParameter(parser, 'Legend', true, @(x) islogical(x) && isscalar(x));
     addParameter(parser, 'Grid', true, @(x) islogical(x) && isscalar(x));
 
     parse(parser, varargin{:});
     opts = parser.Results;
 
-    if ischar(opts.x) || isstring(opts.x), opts.x = char(string(opts.x)); end
-    if ischar(opts.y) || isstring(opts.y), opts.y = char(string(opts.y)); end
-    if ischar(opts.z) || isstring(opts.z), opts.z = char(string(opts.z)); end
     opts.Stability = char(string(opts.Stability));
     opts.InterpMethod = char(string(opts.InterpMethod));
-    if ~isempty(opts.Title), opts.Title = char(string(opts.Title)); end
+    if ~isempty(opts.Title)
+        opts.Title = char(string(opts.Title));
+    end
+end
+
+
+function tf = validate_variable_spec(v)
+    tf = isempty(v) || ...
+         ischar(v) || isstring(v) || ...
+         (isnumeric(v) && isscalar(v) && v >= 1) || ...
+         iscell(v) || ...
+         (isnumeric(v) && isvector(v));
 end
 
 
@@ -356,25 +338,54 @@ function selected = select_branches(branches, branch_spec)
 end
 
 
-function [varname, ok] = resolve_variable_spec(tbl, spec)
+function [varname, ok] = resolve_variable_candidates(tbl, spec)
     vars = tbl.Properties.VariableNames;
-    ok = true;
-
-    if ischar(spec) || isstring(spec)
-        varname = char(string(spec));
-        if ~ismember(varname, vars)
-            ok = false;
-        end
-        return
-    end
-
-    if isnumeric(spec) && isscalar(spec) && spec >= 1 && spec <= width(tbl)
-        varname = vars{spec};
-        return
-    end
-
-    varname = '';
     ok = false;
+    varname = '';
+
+    if isempty(spec)
+        ok = true;
+        return
+    end
+
+    specs = normalize_specs(spec);
+
+    for k = 1:numel(specs)
+        s = specs{k};
+
+        if isstring(s)
+            s = char(s);
+        end
+
+        if ischar(s)
+            if ismember(s, vars)
+                varname = s;
+                ok = true;
+                return
+            end
+        elseif isnumeric(s) && isscalar(s) && s >= 1 && s <= width(tbl)
+            varname = vars{s};
+            ok = true;
+            return
+        end
+    end
+end
+
+
+function specs = normalize_specs(spec)
+    if ischar(spec) || (isstring(spec) && isscalar(spec)) || ...
+            (isnumeric(spec) && isscalar(spec))
+        specs = {spec};
+    elseif iscell(spec)
+        specs = spec;
+    elseif isstring(spec)
+        specs = cellstr(spec(:)).';
+    elseif isnumeric(spec) && isvector(spec)
+        specs = num2cell(spec(:)).';
+    else
+        error('plotbd:InvalidVariableSpec', ...
+            'Variable specification must be a name, index, or list of candidates.');
+    end
 end
 
 
