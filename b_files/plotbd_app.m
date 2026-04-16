@@ -47,7 +47,7 @@ function app = plotbd_app(branches)
     % ---------------------------------------------------------------------
     fig = uifigure( ...
         'Name', 'plotbd app', ...
-        'Position', [100 100 1320 820]);
+        'Position', [100 100 1320 840]);
 
     main_grid = uigridlayout(fig, [1 2]);
     main_grid.ColumnWidth = {360, '1x'};
@@ -60,7 +60,7 @@ function app = plotbd_app(branches)
     ctrl_panel.Layout.Row = 1;
     ctrl_panel.Layout.Column = 1;
 
-    ctrl_grid = uigridlayout(ctrl_panel, [26 2]);
+    ctrl_grid = uigridlayout(ctrl_panel, [27 2]);
     ctrl_grid.ColumnWidth = {120, '1x'};
     ctrl_grid.RowHeight = { ...
         22, ... 1 x
@@ -75,20 +75,21 @@ function app = plotbd_app(branches)
         22, ...10 interp method
         22, ...11 interp factor
         22, ...12 special points
-        22, ...13 special labels
-        22, ...14 legend
-        22, ...15 grid
-        22, ...16 line width
-        22, ...17 marker size
-        22, ...18 title
-        22, ...19 auto update
-        22, ...20 export format
-        22, ...21 export dpi
-        22, ...22 update/reset
-        22, ...23 export
-        44, ...24 help text
-        '1x', ...25 status
-        1};    % 26 spare
+        22, ...13 type labels
+        22, ...14 numeric labels
+        22, ...15 legend
+        22, ...16 grid
+        22, ...17 line width
+        22, ...18 marker size
+        22, ...19 title
+        22, ...20 auto update
+        22, ...21 export format
+        22, ...22 export dpi
+        22, ...23 update/reset
+        22, ...24 export
+        44, ...25 help text
+        '1x', ...26 status
+        1};    % 27 spare
     ctrl_grid.Padding = [10 10 10 10];
     ctrl_grid.RowSpacing = 6;
     ctrl_grid.ColumnSpacing = 8;
@@ -187,101 +188,107 @@ function app = plotbd_app(branches)
     cb_special = uicheckbox(ctrl_grid, 'Value', true);
     cb_special.Layout.Row = 12; cb_special.Layout.Column = 2;
 
-    % Special labels
-    lbl_spl = uilabel(ctrl_grid, 'Text', 'SP labels');
-    lbl_spl.Layout.Row = 13; lbl_spl.Layout.Column = 1;
-    cb_special_labels = uicheckbox(ctrl_grid, 'Value', true);
-    cb_special_labels.Layout.Row = 13; cb_special_labels.Layout.Column = 2;
+    % Type labels
+    lbl_tl = uilabel(ctrl_grid, 'Text', 'Type labels');
+    lbl_tl.Layout.Row = 13; lbl_tl.Layout.Column = 1;
+    cb_type_labels = uicheckbox(ctrl_grid, 'Value', true);
+    cb_type_labels.Layout.Row = 13; cb_type_labels.Layout.Column = 2;
+
+    % Numeric labels
+    lbl_nl = uilabel(ctrl_grid, 'Text', 'Numeric labels');
+    lbl_nl.Layout.Row = 14; lbl_nl.Layout.Column = 1;
+    cb_numeric_labels = uicheckbox(ctrl_grid, 'Value', false);
+    cb_numeric_labels.Layout.Row = 14; cb_numeric_labels.Layout.Column = 2;
 
     % Legend
     lbl_leg = uilabel(ctrl_grid, 'Text', 'Legend');
-    lbl_leg.Layout.Row = 14; lbl_leg.Layout.Column = 1;
+    lbl_leg.Layout.Row = 15; lbl_leg.Layout.Column = 1;
     cb_legend = uicheckbox(ctrl_grid, 'Value', true);
-    cb_legend.Layout.Row = 14; cb_legend.Layout.Column = 2;
+    cb_legend.Layout.Row = 15; cb_legend.Layout.Column = 2;
 
     % Grid
     lbl_grid = uilabel(ctrl_grid, 'Text', 'Grid');
-    lbl_grid.Layout.Row = 15; lbl_grid.Layout.Column = 1;
+    lbl_grid.Layout.Row = 16; lbl_grid.Layout.Column = 1;
     cb_grid = uicheckbox(ctrl_grid, 'Value', true);
-    cb_grid.Layout.Row = 15; cb_grid.Layout.Column = 2;
+    cb_grid.Layout.Row = 16; cb_grid.Layout.Column = 2;
 
     % Line width
     lbl_lw = uilabel(ctrl_grid, 'Text', 'Line width');
-    lbl_lw.Layout.Row = 16; lbl_lw.Layout.Column = 1;
+    lbl_lw.Layout.Row = 17; lbl_lw.Layout.Column = 1;
     ef_linewidth = uieditfield(ctrl_grid, 'numeric', ...
         'Value', 2.0, ...
         'Limits', [0.1 Inf]);
-    ef_linewidth.Layout.Row = 16; ef_linewidth.Layout.Column = 2;
+    ef_linewidth.Layout.Row = 17; ef_linewidth.Layout.Column = 2;
 
     % Marker size
     lbl_ms = uilabel(ctrl_grid, 'Text', 'Marker size');
-    lbl_ms.Layout.Row = 17; lbl_ms.Layout.Column = 1;
+    lbl_ms.Layout.Row = 18; lbl_ms.Layout.Column = 1;
     ef_markersize = uieditfield(ctrl_grid, 'numeric', ...
         'Value', 5, ...
         'Limits', [0.1 Inf]);
-    ef_markersize.Layout.Row = 17; ef_markersize.Layout.Column = 2;
+    ef_markersize.Layout.Row = 18; ef_markersize.Layout.Column = 2;
 
     % Title
     lbl_title = uilabel(ctrl_grid, 'Text', 'Title');
-    lbl_title.Layout.Row = 18; lbl_title.Layout.Column = 1;
+    lbl_title.Layout.Row = 19; lbl_title.Layout.Column = 1;
     ef_title = uieditfield(ctrl_grid, 'text', 'Value', '');
-    ef_title.Layout.Row = 18; ef_title.Layout.Column = 2;
+    ef_title.Layout.Row = 19; ef_title.Layout.Column = 2;
 
     % Auto update
     lbl_auto = uilabel(ctrl_grid, 'Text', 'Auto update');
-    lbl_auto.Layout.Row = 19; lbl_auto.Layout.Column = 1;
+    lbl_auto.Layout.Row = 20; lbl_auto.Layout.Column = 1;
     cb_autoupdate = uicheckbox(ctrl_grid, 'Value', true);
-    cb_autoupdate.Layout.Row = 19; cb_autoupdate.Layout.Column = 2;
+    cb_autoupdate.Layout.Row = 20; cb_autoupdate.Layout.Column = 2;
 
     % Export format
     lbl_fmt = uilabel(ctrl_grid, 'Text', 'Export format');
-    lbl_fmt.Layout.Row = 20; lbl_fmt.Layout.Column = 1;
+    lbl_fmt.Layout.Row = 21; lbl_fmt.Layout.Column = 1;
     dd_export_format = uidropdown(ctrl_grid, ...
         'Items', {'png','jpg','pdf','fig'}, ...
         'Value', 'png');
-    dd_export_format.Layout.Row = 20; dd_export_format.Layout.Column = 2;
+    dd_export_format.Layout.Row = 21; dd_export_format.Layout.Column = 2;
 
     % Export DPI
     lbl_dpi = uilabel(ctrl_grid, 'Text', 'Export dpi');
-    lbl_dpi.Layout.Row = 21; lbl_dpi.Layout.Column = 1;
+    lbl_dpi.Layout.Row = 22; lbl_dpi.Layout.Column = 1;
     ef_export_dpi = uieditfield(ctrl_grid, 'numeric', ...
         'Value', 300, ...
         'Limits', [72 1200], ...
         'RoundFractionalValues', 'on');
-    ef_export_dpi.Layout.Row = 21; ef_export_dpi.Layout.Column = 2;
+    ef_export_dpi.Layout.Row = 22; ef_export_dpi.Layout.Column = 2;
 
     % Buttons
     btn_update = uibutton(ctrl_grid, ...
         'Text', 'Update plot', ...
         'ButtonPushedFcn', @(~,~) update_plot());
-    btn_update.Layout.Row = 22; btn_update.Layout.Column = 1;
+    btn_update.Layout.Row = 23; btn_update.Layout.Column = 1;
 
     btn_reset = uibutton(ctrl_grid, ...
         'Text', 'Reset', ...
         'ButtonPushedFcn', @(~,~) reset_controls());
-    btn_reset.Layout.Row = 22; btn_reset.Layout.Column = 2;
+    btn_reset.Layout.Row = 23; btn_reset.Layout.Column = 2;
 
     spacer3 = uilabel(ctrl_grid, 'Text', '');
-    spacer3.Layout.Row = 23; spacer3.Layout.Column = 1;
+    spacer3.Layout.Row = 24; spacer3.Layout.Column = 1;
     btn_export = uibutton(ctrl_grid, ...
         'Text', 'Export plot', ...
         'ButtonPushedFcn', @(~,~) export_plot());
-    btn_export.Layout.Row = 23; btn_export.Layout.Column = 2;
+    btn_export.Layout.Row = 24; btn_export.Layout.Column = 2;
 
     % Help text
     help_text = uitextarea(ctrl_grid, ...
         'Editable', 'off', ...
         'Value', { ...
             'Y/Z can contain multiple candidates.', ...
-            'For each branch, the first available variable is used.'});
-    help_text.Layout.Row = 24;
+            'First available variable is used per branch.'});
+    help_text.Layout.Row = 25;
     help_text.Layout.Column = [1 2];
 
     % Status
     status_area = uitextarea(ctrl_grid, ...
         'Editable', 'off', ...
         'Value', {'Ready.'});
-    status_area.Layout.Row = 25;
+    status_area.Layout.Row = 26;
     status_area.Layout.Column = [1 2];
 
     % ---------------------------------------------------------------------
@@ -315,7 +322,8 @@ function app = plotbd_app(branches)
         'interp_method', dd_interp_method, ...
         'interp_factor', ef_interp_factor, ...
         'special_points', cb_special, ...
-        'special_labels', cb_special_labels, ...
+        'type_labels', cb_type_labels, ...
+        'numeric_labels', cb_numeric_labels, ...
         'legend', cb_legend, ...
         'grid', cb_grid, ...
         'linewidth', ef_linewidth, ...
@@ -341,7 +349,8 @@ function app = plotbd_app(branches)
     wire_auto_update(dd_interp_method);
     wire_auto_update(ef_interp_factor);
     wire_auto_update(cb_special);
-    wire_auto_update(cb_special_labels);
+    wire_auto_update(cb_type_labels);
+    wire_auto_update(cb_numeric_labels);
     wire_auto_update(cb_legend);
     wire_auto_update(cb_grid);
     wire_auto_update(ef_linewidth);
@@ -412,7 +421,8 @@ function app = plotbd_app(branches)
         dd_interp_method.Value = 'spline';
         ef_interp_factor.Value = 1;
         cb_special.Value = true;
-        cb_special_labels.Value = true;
+        cb_type_labels.Value = true;
+        cb_numeric_labels.Value = false;
         cb_legend.Value = true;
         cb_grid.Value = true;
         ef_linewidth.Value = 2.0;
@@ -425,6 +435,9 @@ function app = plotbd_app(branches)
     end
 
     function update_plot()
+        warnState = warning('off', 'plotbd:MissingVariables');
+        cleanupWarn = onCleanup(@() warning(warnState)); 
+
         try
             prepare_axes_for_new_plot(ax, fig);
 
@@ -455,13 +468,14 @@ function app = plotbd_app(branches)
             status_area.Value = {'Updating plot...'};
 
             if isempty(zvar)
-                plotbd(branches, ...
+                hplot = plotbd(branches, ...
                     'x', xvar, ...
                     'y', cellstr(yvar), ...
                     'branches', branch_spec, ...
                     'Axes', ax, ...
                     'SpecialPoints', cb_special.Value, ...
-                    'SpecialPointLabels', cb_special_labels.Value, ...
+                    'TypeLabels', cb_type_labels.Value, ...
+                    'NumericLabels', cb_numeric_labels.Value, ...
                     'Stability', dd_stability.Value, ...
                     'Interpolate', cb_interp.Value, ...
                     'InterpMethod', dd_interp_method.Value, ...
@@ -472,14 +486,15 @@ function app = plotbd_app(branches)
                     'Legend', cb_legend.Value, ...
                     'Grid', cb_grid.Value);
             else
-                plotbd(branches, ...
+                hplot = plotbd(branches, ...
                     'x', xvar, ...
                     'y', cellstr(yvar), ...
                     'z', cellstr(zvar), ...
                     'branches', branch_spec, ...
                     'Axes', ax, ...
                     'SpecialPoints', cb_special.Value, ...
-                    'SpecialPointLabels', cb_special_labels.Value, ...
+                    'TypeLabels', cb_type_labels.Value, ...
+                    'NumericLabels', cb_numeric_labels.Value, ...
                     'Stability', dd_stability.Value, ...
                     'Interpolate', cb_interp.Value, ...
                     'InterpMethod', dd_interp_method.Value, ...
@@ -491,7 +506,7 @@ function app = plotbd_app(branches)
                     'Grid', cb_grid.Value);
             end
 
-            status_area.Value = {build_status_message(xvar, yvar, zvar, branch_spec)};
+            status_area.Value = {build_status_message(xvar, yvar, zvar, branch_spec, hplot.skipped_branch_numbers)};
 
         catch ME
             prepare_axes_for_new_plot(ax, fig);
@@ -525,7 +540,7 @@ function app = plotbd_app(branches)
         branch_spec = nums;
     end
 
-    function msg = build_status_message(xvar, yvar, zvar, branch_spec)
+    function msg = build_status_message(xvar, yvar, zvar, branch_spec, skipped)
         if ischar(branch_spec) || isstring(branch_spec)
             branch_text = 'all branches';
         else
@@ -535,12 +550,19 @@ function app = plotbd_app(branches)
         ytxt = strjoin(cellstr(yvar), ', ');
 
         if isempty(zvar)
-            msg = sprintf('2D plot: x = %s, y candidates = {%s}, %s.', ...
+            base_msg = sprintf('2D plot: x = %s, y candidates = {%s}, %s.', ...
                 xvar, ytxt, branch_text);
         else
             ztxt = strjoin(cellstr(zvar), ', ');
-            msg = sprintf('3D plot: x = %s, y candidates = {%s}, z candidates = {%s}, %s.', ...
+            base_msg = sprintf('3D plot: x = %s, y candidates = {%s}, z candidates = {%s}, %s.', ...
                 xvar, ytxt, ztxt, branch_text);
+        end
+
+        if isempty(skipped)
+            msg = base_msg;
+        else
+            msg = sprintf('%s Skipped branches: [%s].', ...
+                base_msg, num2str(skipped));
         end
     end
 

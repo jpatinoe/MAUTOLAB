@@ -24,8 +24,10 @@ function h = plotbd(branches, varargin)
 %                          If omitted or empty, plot is 2D.
 %   'branches'           : 'all' (default) or numeric array of branch numbers
 %   'Axes'               : target axes handle
-%   'SpecialPoints'      : true/false, plot special points and labels
-%   'SpecialPointLabels' : true/false, show special-point text labels
+%   'SpecialPoints'      : true/false, plot special points
+%   'TypeLabels'         : true/false, show TY labels (HB, RG, ...)
+%   'NumericLabels'      : true/false, show LAB numbers
+%   'SpecialPointLabels' : legacy alias for TypeLabels
 %   'Stability'          : 'off' | 'dashed' | 'pale'
 %   'Interpolate'        : true/false
 %   'InterpMethod'       : interpolation method for interp1
@@ -79,6 +81,7 @@ function h = plotbd(branches, varargin)
     y_label_name = '';
     z_label_name = '';
     plotted_anything = false;
+    skipped_branch_numbers = [];
 
     for k = 1:numel(selected)
         i = selected(k);
@@ -86,7 +89,8 @@ function h = plotbd(branches, varargin)
 
         if ~istable(tbl)
             warning('plotbd:InvalidBranchData', ...
-                'branches(%d).data is not a table. Skipping this branch.', i);
+                'Skipping branch %d: data is not a table.', branches(i).branch_number);
+            skipped_branch_numbers(end+1) = branches(i).branch_number; %#ok<AGROW>
             continue
         end
 
@@ -104,10 +108,9 @@ function h = plotbd(branches, varargin)
 
         if ~(okx && oky && okz)
             warning('plotbd:MissingVariables', ...
-                ['Branch %d does not contain a compatible x/y/z specification.\n' ...
-                 'Available variables:\n  %s\n' ...
-                 'Skipping this branch.'], ...
-                branches(i).branch_number, strjoin(vars, ', '));
+                'Skipping branch %d: requested variables not available.', ...
+                branches(i).branch_number);
+            skipped_branch_numbers(end+1) = branches(i).branch_number; %#ok<AGROW>
             continue
         end
 
@@ -136,11 +139,19 @@ function h = plotbd(branches, varargin)
             end
         else
             pt = [];
+            order = 1:numel(x);
             if ~strcmpi(opts.Stability, 'off')
                 warning('plotbd:MissingPT', ...
                     'Branch %d has no PT column. Stability display disabled for this branch.', ...
                     branches(i).branch_number);
             end
+        end
+
+        if ismember('LAB', vars)
+            lab = tbl.LAB;
+            lab = lab(order);
+        else
+            lab = zeros(size(x));
         end
 
         bn = branches(i).branch_number;
@@ -171,7 +182,7 @@ function h = plotbd(branches, varargin)
         if opts.SpecialPoints && ismember('TY', vars)
             ty = tbl.TY;
             ty = ty(order);
-            plot_special_points(ax, x, y, z, ty, ty_map, opts, is3D);
+            plot_special_points(ax, x, y, z, ty, lab, ty_map, opts, is3D);
         end
 
         if isempty(x_label_name), x_label_name = xname; end
@@ -225,6 +236,7 @@ function h = plotbd(branches, varargin)
     h.y_name = y_label_name;
     h.z_name = z_label_name;
     h.is3D = is3D;
+    h.skipped_branch_numbers = unique(skipped_branch_numbers, 'stable');
 end
 
 
@@ -244,7 +256,9 @@ function opts = parse_plotbd_options(varargin)
     addParameter(parser, 'Axes', [], @(x) isempty(x) || isgraphics(x, 'axes'));
 
     addParameter(parser, 'SpecialPoints', true, @(x) islogical(x) && isscalar(x));
-    addParameter(parser, 'SpecialPointLabels', true, @(x) islogical(x) && isscalar(x));
+    addParameter(parser, 'TypeLabels', true, @(x) islogical(x) && isscalar(x));
+    addParameter(parser, 'NumericLabels', false, @(x) islogical(x) && isscalar(x));
+    addParameter(parser, 'SpecialPointLabels', [], @(x) isempty(x) || (islogical(x) && isscalar(x)));
 
     addParameter(parser, 'Stability', 'off', @(s) ...
         any(strcmpi(string(s), ["off","dashed","pale"])));
@@ -262,6 +276,11 @@ function opts = parse_plotbd_options(varargin)
 
     parse(parser, varargin{:});
     opts = parser.Results;
+
+    % backward compatibility
+    if ~isempty(opts.SpecialPointLabels)
+        opts.TypeLabels = opts.SpecialPointLabels;
+    end
 
     opts.Stability = char(string(opts.Stability));
     opts.InterpMethod = char(string(opts.InterpMethod));
@@ -555,40 +574,60 @@ function [style, col] = stability_style(is_stable, branch_color, pale_color, mod
 end
 
 
-function plot_special_points(ax, x, y, z, ty, ty_map, opts, is3D)
+function plot_special_points(ax, x, y, z, ty, lab, ty_map, opts, is3D)
     sp_idx = find(ty ~= 0);
 
     for j = sp_idx(:).'
-        label = string(ty(j));
-        if isKey(ty_map, label)
+        label_key = string(ty(j));
+
+        if ~isKey(ty_map, label_key)
+            continue
+        end
+
+        % marker
+        if is3D
+            plot3(ax, x(j), y(j), z(j), 'ko', ...
+                'MarkerSize', opts.MarkerSize, ...
+                'MarkerFaceColor', 'k', ...
+                'HandleVisibility', 'off');
+        else
+            plot(ax, x(j), y(j), 'ko', ...
+                'MarkerSize', opts.MarkerSize, ...
+                'MarkerFaceColor', 'k', ...
+                'HandleVisibility', 'off');
+        end
+
+        % type label
+        type_text = '';
+        if opts.TypeLabels
+            type_text = ty_map(label_key);
+        end
+
+        % numeric label
+        num_text = '';
+        if opts.NumericLabels
+            if isnumeric(lab(j)) && ~isnan(lab(j))
+                num_text = sprintf('%d', lab(j));
+            end
+        end
+
+        if ~isempty(type_text) || ~isempty(num_text)
+            txt = strtrim(strjoin({type_text, num_text}, ' '));
+
             if is3D
-                plot3(ax, x(j), y(j), z(j), 'ko', ...
-                    'MarkerSize', opts.MarkerSize, ...
-                    'MarkerFaceColor', 'k', ...
-                    'HandleVisibility', 'off');
-
-                if opts.SpecialPointLabels
-                    text(ax, x(j), y(j), z(j), ['  ', ty_map(label)], ...
-                        'FontSize', 8, ...
-                        'Color', 'red', ...
-                        'VerticalAlignment', 'bottom', ...
-                        'HorizontalAlignment', 'left', ...
-                        'Interpreter', 'none');
-                end
+                text(ax, x(j), y(j), z(j), ['  ', txt], ...
+                    'FontSize', 8, ...
+                    'Color', 'red', ...
+                    'VerticalAlignment', 'bottom', ...
+                    'HorizontalAlignment', 'left', ...
+                    'Interpreter', 'none');
             else
-                plot(ax, x(j), y(j), 'ko', ...
-                    'MarkerSize', opts.MarkerSize, ...
-                    'MarkerFaceColor', 'k', ...
-                    'HandleVisibility', 'off');
-
-                if opts.SpecialPointLabels
-                    text(ax, x(j), y(j), ['  ', ty_map(label)], ...
-                        'FontSize', 8, ...
-                        'Color', 'red', ...
-                        'VerticalAlignment', 'bottom', ...
-                        'HorizontalAlignment', 'left', ...
-                        'Interpreter', 'none');
-                end
+                text(ax, x(j), y(j), ['  ', txt], ...
+                    'FontSize', 8, ...
+                    'Color', 'red', ...
+                    'VerticalAlignment', 'bottom', ...
+                    'HorizontalAlignment', 'left', ...
+                    'Interpreter', 'none');
             end
         end
     end
